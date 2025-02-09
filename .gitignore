@@ -1,0 +1,12 @@
+**/.vscode
+**/.DS_Store
+build
+release
+debug
+.clang-format
+compile_flags.txt
+**/data
+.cache
+doxygen
+debug
+release
