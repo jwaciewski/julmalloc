@@ -1,3 +1,6 @@
+Introduction
+============
+
 A malloc() implementation, written from scratch.
 
 This library implements the malloc(), calloc(), free() and realloc() functions according to the C23 standards. No prior code is used.
@@ -10,3 +13,14 @@ Storage is allocated on one arena (that is, one area of storage) which consists 
 The arena is expanded, and contracted, in pages of size 4096 bytes. The rationale for expanding in pages, compared to, say, per-chunk sizes, is to avoid frequent, expensive system calls to sbrk().
 
 The library supports allocation with four different allocation strategies, first-fit, next-fit, best-fit and worst-fit. Benchmarks have shown that next-fit is by far the fastest implementation. On default, first-fit is set as an allocation strategy.
+
+Build instructions
+==================
+
+The project can be compiled with e.g. gcc, especially using CMAKE.
+
+To build with cmake, run the following command:
+
+cmake -B build
+
+This will set up the cmake configuration files in the folder `build`, assuming the folder exists. To then compile the project, enter the build folder and run `make`
