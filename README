@@ -24,3 +24,23 @@ To build with cmake, run the following command:
 cmake -B build
 
 This will set up the cmake configuration files in the folder `build`, assuming the folder exists. To then compile the project, enter the build folder and run `make`
+
+Usage
+=====
+
+Cmake will create a shared library in the folder `build/alloc`. There will be according version symbolic links pointing to the actual library.
+
+It is not sufficient to statically compile link the library, as the malloc()-... functions would be overriden if <stdlib.h> is included. To load the library properly, you need to set the the LD_PRELOAD environment variable as follows:
+
+export LD_PRELOAD=/path/to/shared/library
+
+./[your_program]
+
+If you first export the environment variable, your program ./[your_program] will use the malloc()-implementations from the shared library, even if <stdlib.h> is loaded. If you don't want to set the environment variable with export, you can run:
+
+LD_PRELOAD=/path/to/shared/library ./[your_program]
+
+which will set the environment variable only for this execution.
+
+
+
