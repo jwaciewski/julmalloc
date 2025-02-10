@@ -42,6 +42,12 @@ LD_PRELOAD=/path/to/shared/library ./[your_program]
 
 which will set the environment variable only for this execution.
 
+If you want to test the library in a real environment, it is useful to add a
+
+`#DEFINE NDEBUG`
+
+define in alloc/defines.h so that warnings and assertions won` get executed.
+
 TESTING
 =======
 
