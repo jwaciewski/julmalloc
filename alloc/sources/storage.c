@@ -17,7 +17,7 @@ static int copy_byte(uint8_t *addr_old, uint8_t *addr_new) {
     // If the old address is the same as the new address, nothing has to be done
     if (addr_old == addr_new) {
 
-        pr_info("Nothing to do");
+        // pr_info("Nothing to do");
 
         return SUCCESS;
     }

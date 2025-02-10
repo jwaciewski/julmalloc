@@ -27,8 +27,8 @@ static void init_tail(seg_list_head_s *list) {
     // The uint8t_t* typecast is important, otherwise the bitshift will produce
     // nonsensical results
     list->end_addr = (uint8_t *)list + sizeof(struct seg_list_head_s);
-    pr_info("%ld %ld", list->end_addr - (uint8_t *)list,
-            sizeof(struct seg_list_head_s));
+    // pr_info("%ld %ld", list->end_addr - (uint8_t *)list,
+    //         sizeof(struct seg_list_head_s));
 
     // The table pointer *needs* to point to the end of the table_header struct!
     ASSERT(list->end_addr - (uint8_t *)list == sizeof(struct seg_list_head_s));
@@ -111,7 +111,7 @@ size_t get_following_gap_size(uint8_t *addr) {
     // segment header struct to the left
     seg_head_s *header = (seg_head_s *)(addr - sizeof(struct seg_head_s));
 
-    pr_info("Following gap size %zu", header->next_seg_tail->free_following);
+    // pr_info("Following gap size %zu", header->next_seg_tail->free_following);
 
     // The number of free bytes after the tail is stored in the tail, this is
     // exactly the value we need
@@ -128,7 +128,7 @@ size_t get_segment_size(uint8_t *addr) {
     // segment header struct to the left.
     seg_head_s *header = (seg_head_s *)(addr - sizeof(struct seg_head_s));
 
-    pr_info("Segment size is %zu", header->seg_size);
+    // pr_info("Segment size is %zu", header->seg_size);
 
     // The size of the segment (without header and tail size, that is storage
     // size only) is stored in the header.

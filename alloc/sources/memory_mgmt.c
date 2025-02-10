@@ -19,7 +19,7 @@
 seg_list_head_s *start = nullptr;
 
 // Declaration and initialization of allocation function
-alloc_function g_alloc_function = &first_fit;
+alloc_function g_alloc_function = &next_fit;
 
 // This function actually allocated spaces for a given address by adding a
 // segment head, and segment tail with minimum distance size
@@ -61,10 +61,10 @@ uint8_t *add_entry(uint8_t *addr, size_t size) {
     // If the storage list already has an entry, there are some special cases to
     // consider. Otherwise, check if the existing table is large enough
     if (start->first_seg) {
-        pr_info("Head not empty");
-        // This means a segment already exists in the table
-        // We need to check if addr points to a segment *before* or *after* the
-        // first segment
+        // pr_info("Head not empty");
+        //  This means a segment already exists in the table
+        //  We need to check if addr points to a segment *before* or *after* the
+        //  first segment
 
         // We need to find the
         // segment located "before" the current segment and repoint its
@@ -78,7 +78,7 @@ uint8_t *add_entry(uint8_t *addr, size_t size) {
 
         if (previous == (uint8_t *)start) {
 
-            pr_info("Previous pointer is start");
+            // pr_info("Previous pointer is start");
 
             // If the returned address matches the storage segment header,
             // this means that addr points to some area before the first
@@ -182,7 +182,7 @@ uint8_t *add_entry(uint8_t *addr, size_t size) {
 
         } else {
 
-            pr_info("Previous pointer is not start");
+            // pr_info("Previous pointer is not start");
 
             // Otherwise, the previous tail is simply the returned value
             // casted to an appropriate pointer and we can assume that addr
@@ -194,52 +194,52 @@ uint8_t *add_entry(uint8_t *addr, size_t size) {
             // directly into the previous tail, which is quite bad
             ASSERT((uint8_t *)temp + sizeof(*temp) <= addr);
 
-            pr_info("Segment size of previous segment: %zu",
-                    temp->prev_seg_head->seg_size);
+            // pr_info("Segment size of previous segment: %zu",
+            //        temp->prev_seg_head->seg_size);
 
             // Store the old consequtive number of free bytes
             size_t old_free_size = temp->free_following;
 
-            // Store the distance of the new segment location compared to
-            // the previous segment location
+            // Store the distance of the new segment location compared
+            // to the previous segment location
             int offset = addr - ((uint8_t *)temp + sizeof(*temp));
 
-            // Extremely important check. If this assertion is violated, this
-            // means addr points *into* the previous segment and tries to
-            // allocate space where it is absolutely not possible. In this case,
-            // the allocator function *really* messed up somewhere, which is
-            // really bad.
-            // Should not trigger because validity of addr is already checked
-            // above. Regardless, keep this sanity check in case the code is
-            // changed!
+            // Extremely important check. If this assertion is violated,
+            // this means addr points *into* the previous segment and
+            // tries to allocate space where it is absolutely not
+            // possible. In this case, the allocator function *really*
+            // messed up somewhere, which is really bad. Should not
+            // trigger because validity of addr is already checked
+            // above. Regardless, keep this sanity check in case the
+            // code is changed!
             ASSERT(offset >= 0);
 
-            // The old gap size minus offset needs to be larger than the desired
-            // new size (with overhead), otherwise the allocator messed up
-            // somewhere badly
+            // The old gap size minus offset needs to be larger than the
+            // desired new size (with overhead), otherwise the allocator
+            // messed up somewhere badly
             ASSERT((int)old_free_size - offset >= new_size);
 
             // The new segment head simply begins at the given address
             new_seg = (seg_head_s *)addr;
 
-            // The predecessor tail of the new segment header is exactly the
-            // previous tail
+            // The predecessor tail of the new segment header is exactly
+            // the previous tail
             new_seg->prev_seg_tail = temp;
 
             // On the contrary, the free following size of the previous
             // segment is now simply the offset
             new_seg->prev_seg_tail->free_following = offset;
 
-            // The address of the new segment needs to be the address of the
-            // previous tail, plus the size of the previous tail, plus the
-            // number of new free following bytes
+            // The address of the new segment needs to be the address of
+            // the previous tail, plus the size of the previous tail,
+            // plus the number of new free following bytes
             ASSERT((uint8_t *)new_seg ==
                    (uint8_t *)new_seg->prev_seg_tail +
                        sizeof(*new_seg->prev_seg_tail) +
                        new_seg->prev_seg_tail->free_following);
 
-            // The tail of the new segment is located at an offset of the
-            // size of the segment header, plus the user size
+            // The tail of the new segment is located at an offset of
+            // the size of the segment header, plus the user size
             new_seg->next_seg_tail =
                 (seg_tail_s *)((uint8_t *)new_seg + sizeof(*new_seg) +
                                effective_size);
@@ -247,17 +247,18 @@ uint8_t *add_entry(uint8_t *addr, size_t size) {
             // The new segment user space size is the desired size
             new_seg->seg_size = size;
 
-            // The predecessor of the new segment tail is the new segment
-            // header, quite obviously
+            // The predecessor of the new segment tail is the new
+            // segment header, quite obviously
             new_seg->next_seg_tail->prev_seg_head = new_seg;
 
-            // The successor of the new segment tail is the old successor of
-            // the previous tail
+            // The successor of the new segment tail is the old
+            // successor of the previous tail
             new_seg->next_seg_tail->next_seg_head = temp->next_seg_head;
 
-            // THe number of free following bytes is the old free folloying
-            // bytes number of the previous segment, minus the new necessary
-            // size (with overhead) together with the new segment offset
+            // THe number of free following bytes is the old free
+            // folloying bytes number of the previous segment, minus the
+            // new necessary size (with overhead) together with the new
+            // segment offset
             new_seg->next_seg_tail->free_following =
                 old_free_size - (offset + new_size);
 
@@ -265,24 +266,25 @@ uint8_t *add_entry(uint8_t *addr, size_t size) {
             // point to the new head
             new_seg->prev_seg_tail->next_seg_head = new_seg;
 
-            // Integrity check. The sum of the previous segment free following
-            // bytes, plus the new segment size (with overhead), plus the
-            // consecutive number of free bytes, needs to add up exactly to the
-            // old free bytes size when the current segment did not exist yet!
+            // Integrity check. The sum of the previous segment free
+            // following bytes, plus the new segment size (with
+            // overhead), plus the consecutive number of free bytes,
+            // needs to add up exactly to the old free bytes size when
+            // the current segment did not exist yet!
             ASSERT(new_seg->prev_seg_tail->free_following + new_size +
                        new_seg->next_seg_tail->free_following ==
                    old_free_size);
 
-            // The predecessor, of the successor, of the new segment tail,
-            // points to the new segment tail
+            // The predecessor, of the successor, of the new segment
+            // tail, points to the new segment tail
             new_seg->next_seg_tail->next_seg_head->prev_seg_tail =
                 new_seg->next_seg_tail;
 
-            // Also, the new segment address, plus the entire segment size
-            // (with overhead), plus the subsequent number of free bytes
-            // needs to be smaller than the end of the storage table,
-            // otherwise something went wrong and we can expect nice
-            // SEGFAULTS we all like.
+            // Also, the new segment address, plus the entire segment
+            // size (with overhead), plus the subsequent number of free
+            // bytes needs to be smaller than the end of the storage
+            // table, otherwise something went wrong and we can expect
+            // nice SEGFAULTS we all like.
             ASSERT((uint8_t *)new_seg + new_size +
                        new_seg->next_seg_tail->free_following <=
                    start->end_addr);
@@ -296,7 +298,7 @@ uint8_t *add_entry(uint8_t *addr, size_t size) {
         // current number of free bytes in the storage table. As such, we need
         // to set the subsequent number of free bytes appropriately!
 
-        pr_info("Head empty");
+        // pr_info("Head empty");
 
         // As described above, to obtain the "empty" size of the storage table,
         // subtract the
@@ -400,19 +402,19 @@ uint8_t *add_entry(uint8_t *addr, size_t size) {
     // If the new segment address is a valid address, congratulations, you
     // successfully managed to allocate a new segment.
     if (new_seg) {
-        pr_info("Successfully added entry with user size %zu %zu", size,
-                new_seg->seg_size);
+        // pr_info("Successfully added entry with user size %zu %zu", size,
+        //        new_seg->seg_size);
 
-        // For Nextfit, set the last allocated tail address to the tail of
-        // the just allocated segment
+        // For Nextfit, set the last allocated tail address to the tail
+        // of the just allocated segment
         set_last_addr(new_seg->next_seg_tail);
 
-        // We are again only interested in the usable address for the user,
-        // as such we return the new segment address (pointing to the
-        // header), plus the size of the new segment header
+        // We are again only interested in the usable address for the
+        // user, as such we return the new segment address (pointing to
+        // the header), plus the size of the new segment header
         return (uint8_t *)new_seg + sizeof(*new_seg);
     } else {
-        pr_info("Could not add entry");
+        // pr_info("Could not add entry");
 
         // Otherwise, well, either addr is an invalid pointer (this is really,
         // really bad and should never happen, at all, thus the assertions
@@ -448,7 +450,7 @@ void remove_segment(uint8_t *addr) {
     // located after the storage table header
     ASSERT((uint8_t *)old >= (uint8_t *)start + sizeof(*start));
 
-    pr_info("Valid address");
+    // pr_info("Valid address");
 
     // If the corresponding segment does not belong to the first segment, simply
     // repoint pointers. This also means the list has more than 2 allocated
@@ -544,7 +546,7 @@ void remove_segment(uint8_t *addr) {
             }
         }
 
-        pr_info("Successfully free entry");
+        // pr_info("Successfully free entry");
     } else {
 
         // In this case, old points to the first segment
@@ -560,7 +562,7 @@ void remove_segment(uint8_t *addr) {
             if (old->next_seg_tail == get_last_addr()) {
                 set_last_addr(nullptr);
             }
-            pr_info("Start equals head");
+            // pr_info("Start equals head");
 
             // Simple sanity check: Make sure that the next head of the
             // current tail is the current head again
@@ -829,7 +831,7 @@ uint8_t *expand_list(size_t size) {
     // current list size to obtain a fitting table
     if (!start->first_seg) {
 
-        pr_info("List is empty");
+        // pr_info("List is empty");
 
         // As explained earlier, we want to expand the table by the total
         // size, minus the current (free) table size. The current (free)
@@ -864,7 +866,7 @@ uint8_t *expand_list(size_t size) {
             exit(EXIT_FAILURE);
         }
 
-        pr_info("Expanded list by %d", num_pages * PAGE_SIZE);
+        // pr_info("Expanded list by %d", num_pages * PAGE_SIZE);
 
         // Since we expanded the list, the tail pointer needs to be updated
         // by the expanded size
@@ -906,7 +908,7 @@ uint8_t *expand_list(size_t size) {
     // frequent syscalls
     size_t num_pages = (size_t)ceil((double)to_expand / PAGE_SIZE);
 
-    pr_info("Expanding by size %d", to_expand);
+    // pr_info("Expanding by size %d", to_expand);
 
     if (sbrk(num_pages * PAGE_SIZE) == (void *)-1) {
         // In this case, sbrk failed to allocate and we need to abort
@@ -915,7 +917,7 @@ uint8_t *expand_list(size_t size) {
         exit(EXIT_FAILURE);
     }
 
-    pr_info("Expanded list by %d", to_expand);
+    // pr_info("Expanded list by %d", to_expand);
 
     // Update the tail pointer by the number of bytes we expanded the list
     // by
@@ -949,7 +951,7 @@ uint8_t *find_free_seg(size_t size) {
         return expand_list(size);
     }
 
-    pr_info("Start already initialized");
+    // pr_info("Start already initialized");
 
     // If table is initialized, search for a gap with one of the alloc
     // algorithms set previously

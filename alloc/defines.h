@@ -15,7 +15,7 @@
 //! brk/sbrk calls.
 #define PAGE_SIZE 4096
 
-#define NDEBUG
+// #define NDEBUG
 
 // The storage addresses need to be aligned. This macro contains the largest
 // align supported by the OS for some data type. According to the malloc()
@@ -31,10 +31,16 @@
 #define ALIGNMENT _Alignof(max_align_t)
 
 //! Macro for LD_PRELOAD asserts because normal assert somehow don't work
+#ifndef NDEBUG
 #define ASSERT(expr)                                                           \
     if (!(expr)) {                                                             \
         a_abort(__FILE__, __LINE__, #expr);                                    \
     }
+#else
+#define ASSERT(expr)                                                           \
+    do {                                                                       \
+    } while (0);
+#endif
 
 // ERROR define for returns
 #define ERROR -1

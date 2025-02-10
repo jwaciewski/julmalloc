@@ -8,7 +8,6 @@
 #include "alloc/storage.h"
 #include "alloc/strats.h"
 #include "alloc/types.h"
-
 #include <errno.h>
 #include <pthread.h>
 #include <stddef.h>
@@ -38,10 +37,10 @@ void *malloc(size_t size) {
 
     // If size is zero, return a nullptr
     if (!size) {
-        pr_warning("Size zero");
+        pr_warning("malloc(): Size zero");
         return nullptr;
     }
-    pr_info("Allocating with size %zu", size);
+    // pr_info("Allocating with size %zu", size);
 
     // Lock mutex
     pthread_mutex_lock(&storage_lock);
@@ -50,13 +49,13 @@ void *malloc(size_t size) {
     // expanded.
     uint8_t *new_a = find_free_seg(size);
 
-    pr_info("Found a gap at address %p\n", new_a);
+    // pr_info("Found a gap at address %p\n", new_a);
 
     // If no gap has been found, this likely means heap storage is exhausted,
     // that is sbrk failed. Return a nullptr in this case and unlock mutex
     if (!new_a) {
         pthread_mutex_unlock(&storage_lock);
-        pr_error("Did not find gap and neither could expand");
+        pr_error("malloc(): Did not find gap and neither could expand");
         return nullptr;
     }
 
@@ -68,13 +67,15 @@ void *malloc(size_t size) {
     // but in the unlikely case adding an entry failed, we return a nullptr
     if (!user_a) {
         pthread_mutex_unlock(&storage_lock);
-        pr_error("Could not add map entry");
+        pr_error("malloc(): Could not add map entry");
         return nullptr;
     }
 
     // Unlock mutex
     pthread_mutex_unlock(&storage_lock);
-    pr_info("Successfully allocated segment of size %zu", size);
+    // pr_info("Successfully allocated segment of size %zu", size);
+
+    pr_info("malloc(): Allocated storage of size %zu at %p", size, user_a);
 
     // Return new address which is *fundamentally* aligned to any data type
     return user_a;
@@ -113,11 +114,9 @@ void free(void *ptr) {
 
     // Return nullptr on nullptr
     if (!ptr) {
-        pr_warning("Null pointer %ptr", ptr);
+        pr_warning("free(): ptr %p is nullptr", ptr);
         return;
     }
-
-    pr_info("Freeing");
 
     // We simply remove a segment by removing all references to it in the
     // linked list and/or the storage table header. For that, we lock the mutex
@@ -125,12 +124,14 @@ void free(void *ptr) {
     pthread_mutex_lock(&storage_lock);
     remove_segment((uint8_t *)ptr);
     pthread_mutex_unlock(&storage_lock);
+
+    pr_info("free(): Success");
 }
 
 void *calloc(size_t n_memb, size_t size) {
 
     if (!n_memb || !size) {
-        pr_warning("Product of input is zero. No alloc");
+        pr_warning("calloc(): Product of input is zero. No alloc");
         return nullptr;
     }
 
@@ -142,11 +143,14 @@ void *calloc(size_t n_memb, size_t size) {
         return nullptr;
     }
 
-    pr_info("Valid pointer");
-    // Set the entire storage to zeroes
+    // pr_info("Valid pointer");
+    //  Set the entire storage to zeroes
     set_mem_zero(new_a, n_memb * size);
 
-    pr_info("Set memory to zero");
+    // pr_info("Set memory to zero");
+
+    pr_info("calloc(): Allocated storage of size %zu at %p", size, new_a);
+
     return new_a;
 }
 
@@ -187,34 +191,31 @@ void *realloc(void *ptr, size_t size) {
     // implementation defined, and one option was to free on size of 0, return a
     // nullptr or do nothing, an return a nullptr.
     if (size == 0) {
+        pr_warning("realloc(): Size 0");
         return nullptr;
     }
 
     // If ptr is nullptr, just pretend as if malloc has been called
     if (!ptr) {
-        pr_warning("ptr is NULL. realloc acts like malloc");
+        pr_warning(
+            "realloc(): ptr is NULL. realloc acts like malloc with size %zu",
+            size);
         void *new_a = malloc(size);
         return new_a;
     }
-
-    // Lock the mutex
-    pthread_mutex_lock(&storage_lock);
 
     // Get the size of allocated storage the segment where ptr points to (if
     // possible. If ptr is an invalid pointer, expect undefined behaviour). This
     // is necessary for expanding to check if the following free size is
     // sufficiently large
     size_t old_size = get_segment_size((uint8_t *)ptr);
-    pr_info("Old size: %zu New size: %zu", old_size, size);
+    // pr_info("Old size: %zu New size: %zu", old_size, size);
 
     // This should not really happen, but in this case nothing can be
     // expanded because guaranteed, ptr does not point to any segment
     if (old_size == 0) {
-        pr_warning("Invalid pointer");
-
-        // Unlock mutex
-        pthread_mutex_unlock(&storage_lock);
-
+        pr_warning("realloc(): Invalid pointer");
+        free(ptr);
         return nullptr;
     }
 
@@ -222,10 +223,7 @@ void *realloc(void *ptr, size_t size) {
     // be done
     if (old_size == size) {
 
-        pr_warning("Same size, do nothing");
-
-        // Unlock mutex
-        pthread_mutex_unlock(&storage_lock);
+        pr_info("realloc(): Same size, do nothing");
 
         // Return the same pointer being passed to the realloc and do nothing
         return ptr;
@@ -235,6 +233,9 @@ void *realloc(void *ptr, size_t size) {
     // minus new size, but only if the new size is smaller than the old segment
     // size
     if (size < old_size) {
+
+        // For shrinking, we need to lock the mutex
+        pthread_mutex_lock(&storage_lock);
 
         // If shrink_segment fails, return nullptr, the old pointer will not be
         // modified. shrink_segment can only fail if the parameters are invalid,
@@ -252,11 +253,17 @@ void *realloc(void *ptr, size_t size) {
             pthread_mutex_unlock(&storage_lock);
 
             // Return same pointer as being passed to realloc
+
+            pr_info("realloc(): Shrunk segment %p from %zu to %zu", ptr,
+                    old_size, size);
             return ptr;
         }
     }
 
-    pr_info("Could not shrink, trying to expand");
+    // pr_info("Could not shrink, trying to expand");
+
+    // Lock mutex
+    pthread_mutex_lock(&storage_lock);
 
     // Try to expand the segment by the new size minus the existing size, if
     // the following gap size is larger than the to be expanded size.
@@ -264,10 +271,9 @@ void *realloc(void *ptr, size_t size) {
     // chunk header and tail, the tail is only moved in steps of ALIGNMENT. For
     // this reason, the old size and new size need to be rounded up to the next
     // multiple of ALIGNMENT for comparison
-    if (round_up(old_size, ALIGNMENT) +
-            round_up(get_following_gap_size((uint8_t *)ptr), ALIGNMENT) >=
+    if (round_up(get_following_gap_size((uint8_t *)ptr), ALIGNMENT) +
+            round_up(old_size, ALIGNMENT) >=
         round_up(size, ALIGNMENT)) {
-
         // However, we still pass the actual size to expand_segment and not the
         // rounded up values above, simply because the actual usable size for
         // the user defined in the header is dependent on the actual size.
@@ -286,15 +292,21 @@ void *realloc(void *ptr, size_t size) {
             // Unlock mutex.
             pthread_mutex_unlock(&storage_lock);
 
-            pr_info("Successfully expanded");
+            // pr_info("Successfully expanded");
+
+            pr_info("realloc(): Expanded segment %p from %zu to %zu", ptr,
+                    old_size, size);
 
             // Return the same pointer as passed to realloc
             return ptr;
         }
     }
 
-    pr_info("Could neither shrink nor expand. Trying to aquire new storage "
-            "segment");
+    // Unlock mutex
+    pthread_mutex_unlock(&storage_lock);
+
+    // pr_info("Could neither shrink nor expand. Trying to aquire new storage "
+    //"segment");
 
     // Some remarks on how to reallocate: First, we allocate new space.
     // Then, we copy all data.
@@ -311,38 +323,40 @@ void *realloc(void *ptr, size_t size) {
     // overcomplicate everything and possibly breaks the old pointer. So,
     // let's not do that.
 
-    // Unlock mutex
-    pthread_mutex_unlock(&storage_lock);
+    pr_info("realloc(): Could not expand. Allocating new storage");
 
     // This behaviour is also called "malloc-copy-free"
     uint8_t *new_a = malloc(size);
 
-    // Could not realloc. Note how the old pointer is left untouched because
+    // Could not realloc. Note how the old pointer is left untouched
+    // because
     if (!new_a) {
-
-        pr_error("No new storage found");
+        pr_error("realloc(): malloc(): Could not allocate");
 
         // Return the nullptr
         return nullptr;
     }
 
-    pr_info("Found new segment");
+    // pr_info("Found new segment");
 
     // Copy memory from old space to new space.
     // copy_mem might fail for some reason. In this case, note how the old
-    // memory where ptr points to is left untouched due to the assertion above
-    // that the new segment is at a different location than the old segment
+    // memory where ptr points to is left untouched due to the assertion
+    // above that the new segment is at a different location than the old
+    // segment
     int status = copy_mem((uint8_t *)ptr, new_a, old_size);
     if (status == ERROR) {
-
-        pr_error("Could not move memory");
+        pr_error("realloc(): Could not move memory");
 
         // Return the nullptr
         return nullptr;
     }
 
-    // Finally, after successfull copying, we can actually, and safely, free
-    // the old segment and return the new address properly casted
+    pr_info("realloc(): Reallocated from %p to %p and expanded from %zu to %zu",
+            ptr, new_a, old_size, size);
+
+    // Finally, after successfull copying, we can actually, and safely,
+    // free the old segment and return the new address properly casted
     free(ptr);
 
     // Return new address
