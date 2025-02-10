@@ -42,6 +42,19 @@ LD_PRELOAD=/path/to/shared/library ./[your_program]
 
 which will set the environment variable only for this execution.
 
+TESTING
+=======
+
+This library includes a predefined set of tests which will be build with CMAKE. To execute all tests, from the build directory, run
+
+`ctest`
+
+This command will execute all tests sequentially.
+
+You can also run all tests with
+
+`make test`
+
 COPYRIGHT
 =========
 
