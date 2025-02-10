@@ -1,8 +1,8 @@
   # Introduction
 
-A malloc() implementation, written from scratch.
+A malloc() implementation, written from scratch in C.
 
-This library implements the malloc(), calloc(), free() and realloc() functions in C language according to the C23 standards. No prior code is used.
+This library implements the malloc(), calloc(), free() and realloc() functions according to the C23 standard. No prior code is used.
 
 The library is thread-safe, which is ensured through the usage of a mutex.
 
