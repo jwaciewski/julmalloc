@@ -42,5 +42,10 @@ LD_PRELOAD=/path/to/shared/library ./[your_program]
 
 which will set the environment variable only for this execution.
 
+COPYRIGHT
+=========
+
+Copyright information are provided in the LICENSE file
+
 
 
