@@ -25,7 +25,7 @@ int main() {
     for (int i = 1; i <= STORAGE_SIZE_TESTING; i++) {
         for (int j = 0; j < STORAGE_SIZE_TESTING / i; i++) {
             pr_info("Allocating elements of size i");
-            array[i] = malloc(i);
+            array[i] = calloc(1, i);
             if (!is_empty(array[i], i)) {
                 return EXIT_FAILURE;
             }
