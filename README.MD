@@ -1,4 +1,4 @@
-# Introduction
+  # Introduction
 
 A malloc() implementation, written from scratch.
 
@@ -18,9 +18,9 @@ The library supports allocation with four different allocation strategies, first
 The project can be compiled with e.g. gcc, especially using CMAKE.
 
 To build with cmake, run the following command:
-
+```
 cmake -B build
-
+```
 This will set up the cmake configuration files in the folder `build`, assuming the folder exists. To then compile the project, enter the build folder and run `make`
 
 # Usage
