@@ -48,7 +48,7 @@ If you want to test the library in a real environment, it is useful to add a
 
 define in alloc/defines.h so that warnings and assertions won` get executed.
 
-TESTING
+Testing
 =======
 
 This library includes a predefined set of tests which will be build with CMAKE. To execute all tests, from the build directory, run
@@ -60,6 +60,15 @@ This command will execute all tests sequentially.
 You can also run all tests with
 
 `make test`
+
+Documentation
+=============
+
+To generate a documentation, run
+
+`doxygen`
+
+The corresponding doxygen files will be generated in the `doxygen` folder and can be accessed by opening `index.html` in a web browser
 
 COPYRIGHT
 =========
