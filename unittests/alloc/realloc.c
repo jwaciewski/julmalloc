@@ -15,9 +15,11 @@ int main() {
     for (size_t i = 1; i < STORAGE_SIZE_TESTING; i++) {
         if (realloc(addr, STORAGE_SIZE_TESTING - i) != addr) {
             pr_error("Invalid realloc");
+            return EXIT_FAILURE;
         }
         if (realloc(addr2, STORAGE_SIZE_TESTING - i) != addr2) {
             pr_error("Invalid realloc");
+            return EXIT_FAILURE;
         }
         if (!is_aligned(addr) || !is_aligned(addr2)) {
             return EXIT_FAILURE;
@@ -27,9 +29,11 @@ int main() {
     for (size_t i = 2; i <= STORAGE_SIZE_TESTING; i++) {
         if (realloc(addr, i) != addr) {
             pr_error("Invalid realloc");
+            return EXIT_FAILURE;
         }
         if (realloc(addr2, i) != addr2) {
             pr_error("Invalid realloc");
+            return EXIT_FAILURE;
         }
         if (!is_aligned(addr) || !is_aligned(addr2)) {
             return EXIT_FAILURE;
@@ -69,5 +73,14 @@ int main() {
         }
         free(new_addr);
         free(barrier);
+    }
+
+    addr = malloc(1);
+
+    for (size_t i = 2; i <= STORAGE_SIZE_TESTING * 10; i++) {
+        if (!(addr = realloc(addr, i))) {
+            pr_error("Invalid realloc");
+            return EXIT_FAILURE;
+        }
     }
 }

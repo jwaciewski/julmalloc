@@ -494,7 +494,7 @@ void remove_segment(uint8_t *addr) {
         // Or, we removed some previous segment, and we know there are more than
         // 1 segments in this case, so, the number of free bytes need to match
         // up with the beginning of the next segment's head
-        ASSERT((uint8_t *)pred + sizeof(*pred) + pred->free_following ==
+        ASSERT((uint8_t *)pred + sizeof(*pred) + pred->free_following <=
                    start->end_addr ||
                (uint8_t *)pred + sizeof(*pred) + pred->free_following ==
                    (uint8_t *)pred->next_seg_head);

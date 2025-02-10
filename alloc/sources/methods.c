@@ -197,6 +197,9 @@ void *realloc(void *ptr, size_t size) {
         return new_a;
     }
 
+    // Lock the mutex
+    pthread_mutex_lock(&storage_lock);
+
     // Get the size of allocated storage the segment where ptr points to (if
     // possible. If ptr is an invalid pointer, expect undefined behaviour). This
     // is necessary for expanding to check if the following free size is
@@ -208,6 +211,10 @@ void *realloc(void *ptr, size_t size) {
     // expanded because guaranteed, ptr does not point to any segment
     if (old_size == 0) {
         pr_warning("Invalid pointer");
+
+        // Unlock mutex
+        pthread_mutex_unlock(&storage_lock);
+
         return nullptr;
     }
 
@@ -217,6 +224,9 @@ void *realloc(void *ptr, size_t size) {
 
         pr_warning("Same size, do nothing");
 
+        // Unlock mutex
+        pthread_mutex_unlock(&storage_lock);
+
         // Return the same pointer being passed to the realloc and do nothing
         return ptr;
     }
@@ -225,9 +235,6 @@ void *realloc(void *ptr, size_t size) {
     // minus new size, but only if the new size is smaller than the old segment
     // size
     if (size < old_size) {
-
-        // For shrinking, we need to lock the mutex
-        pthread_mutex_lock(&storage_lock);
 
         // If shrink_segment fails, return nullptr, the old pointer will not be
         // modified. shrink_segment can only fail if the parameters are invalid,
@@ -257,11 +264,9 @@ void *realloc(void *ptr, size_t size) {
     // chunk header and tail, the tail is only moved in steps of ALIGNMENT. For
     // this reason, the old size and new size need to be rounded up to the next
     // multiple of ALIGNMENT for comparison
-    if (get_following_gap_size((uint8_t *)ptr) >=
-        round_up(size, ALIGNMENT) - round_up(old_size, ALIGNMENT)) {
-
-        // Lock mutex
-        pthread_mutex_lock(&storage_lock);
+    if (round_up(old_size, ALIGNMENT) +
+            round_up(get_following_gap_size((uint8_t *)ptr), ALIGNMENT) >=
+        round_up(size, ALIGNMENT)) {
 
         // However, we still pass the actual size to expand_segment and not the
         // rounded up values above, simply because the actual usable size for
@@ -305,6 +310,9 @@ void *realloc(void *ptr, size_t size) {
     // unnecessarily expand the table. But, considering suchs cases
     // overcomplicate everything and possibly breaks the old pointer. So,
     // let's not do that.
+
+    // Unlock mutex
+    pthread_mutex_unlock(&storage_lock);
 
     // This behaviour is also called "malloc-copy-free"
     uint8_t *new_a = malloc(size);

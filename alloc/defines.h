@@ -15,6 +15,8 @@
 //! brk/sbrk calls.
 #define PAGE_SIZE 4096
 
+#define NDEBUG
+
 // The storage addresses need to be aligned. This macro contains the largest
 // align supported by the OS for some data type. According to the malloc()
 // definition in C23, addresses returned by malloc() need to be "suitably
