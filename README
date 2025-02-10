@@ -2,7 +2,7 @@ A malloc() implementation, written from scratch.
 
 This library implements the malloc(), calloc(), free() and realloc() functions according to the C23 standards. No prior code is used.
 
-The library is thread-safe.
+The library is thread-safe, which is ensured through the usage of a mutex.
 
 Storage is allocated in a linked list of chunks. Each chunk consists of a header, the payload (that is, usable space for the caller of malloc()), and a tail. The header contains information about the payload size, the tail contains information about the number of free bytes until the next chunk.
 The header contains pointers to the next following tail, and the previous tail. The tail contains information to the next following header, and the previous header.
