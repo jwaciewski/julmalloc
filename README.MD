@@ -1,4 +1,4 @@
-Introduction
+# Introduction
 
 A malloc() implementation, written from scratch.
 
@@ -13,8 +13,7 @@ The arena is expanded, and contracted, in pages of size 4096 bytes. The rational
 
 The library supports allocation with four different allocation strategies, first-fit, next-fit, best-fit and worst-fit. Benchmarks have shown that next-fit is by far the fastest implementation. On default, first-fit is set as an allocation strategy.
 
-Build instructions
-==================
+# Build instructions
 
 The project can be compiled with e.g. gcc, especially using CMAKE.
 
@@ -24,8 +23,7 @@ cmake -B build
 
 This will set up the cmake configuration files in the folder `build`, assuming the folder exists. To then compile the project, enter the build folder and run `make`
 
-Usage
-=====
+# Usage
 
 Cmake will create a shared library in the folder `build/alloc`. There will be according version symbolic links pointing to the actual library.
 
@@ -47,8 +45,7 @@ If you want to test the library in a real environment, it is useful to add a
 
 define in alloc/defines.h so that warnings and assertions won` get executed.
 
-Testing
-=======
+# Testing
 
 This library includes a predefined set of tests which will be build with CMAKE. To execute all tests, from the build directory, run
 
@@ -60,8 +57,7 @@ You can also run all tests with
 
 `make test`
 
-Documentation
-=============
+# Documentation
 
 To generate a documentation, run
 
@@ -69,8 +65,7 @@ To generate a documentation, run
 
 The corresponding doxygen files will be generated in the `doxygen` folder and can be accessed by opening `index.html` in a web browser
 
-COPYRIGHT
-=========
+# COPYRIGHT
 
 Copyright information are provided in the LICENSE file
 
